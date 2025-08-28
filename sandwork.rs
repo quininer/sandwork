@@ -121,7 +121,8 @@ fn main() -> anyhow::Result<()> {
 
     let mut args = args.peekable();
     if args.peek().is_none() {
-        cmd.arg("--").arg("/usr/bin/bash");
+        let shell = env::var_os("SHELL").context("not found $SHELL")?;
+        cmd.arg("--").arg(shell);
     } else {
         cmd.arg("--").args(args);
     }
