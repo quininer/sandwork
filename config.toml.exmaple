@@ -1,0 +1,16 @@
+overlay = [
+  ".config/helix",
+  ".config/jj",
+  ".config/fish",
+  ".cargo",
+  ".rustup",
+]
+
+shadow = [
+  ".cargo/credentials.toml",
+]
+
+robind = [
+  ".bashrc",
+  ".gitconfig",
+]
