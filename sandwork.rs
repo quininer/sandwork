@@ -14,6 +14,7 @@ pub struct Config {
 }
 
 fn main() -> anyhow::Result<()> {
+    let args = env::args().skip(1);
     let home = env::home_dir().context("not found home")?;
     let sandwork = home.join(".sandwork");
     let rwsrc = sandwork.join("rwsrc");
@@ -116,11 +117,14 @@ fn main() -> anyhow::Result<()> {
         };
 
         cmd.arg("--ro-bind-try").arg(src).arg(path);
-    }    
+    }
 
-    cmd
-        .arg("--")
-        .arg("/usr/bin/bash");
+    let mut args = args.peekable();
+    if args.peek().is_none() {
+        cmd.arg("--").arg("/usr/bin/bash");
+    } else {
+        cmd.arg("--").args(args);
+    }
 
     Err(cmd.exec().into())
 }
