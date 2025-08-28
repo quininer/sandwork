@@ -48,6 +48,13 @@ fn main() -> anyhow::Result<()> {
             "--ro-bind", "/dev/null", "/etc/shadow-",
         ]);
 
+    if let (Some(xdg_rt), Some(display)) =
+        (env::var_os("XDG_RUNTIME_DIR"), env::var_os("WAYLAND_DISPLAY"))
+    {
+        let path = PathBuf::from(xdg_rt).join(display);
+        cmd.arg("--ro-bind").arg(&path).arg(&path);
+    }
+
     for dir in &config.overlay {
         let path = home.join(dir);
         let rwsrc = rwsrc.join(dir);
@@ -75,7 +82,7 @@ fn main() -> anyhow::Result<()> {
             path = bind;
         };
 
-        cmd.arg("--bind").arg(path).arg(path);        
+        cmd.arg("--bind-try").arg(path).arg(path);        
     }    
 
     for bind in &config.robind {
@@ -89,7 +96,7 @@ fn main() -> anyhow::Result<()> {
             path = bind;
         };
 
-        cmd.arg("--ro-bind").arg(path).arg(path);        
+        cmd.arg("--ro-bind-try").arg(path).arg(path);        
     }
 
     for shadow in &config.shadow {
@@ -108,7 +115,7 @@ fn main() -> anyhow::Result<()> {
             &empty
         };
 
-        cmd.arg("--ro-bind").arg(src).arg(path);
+        cmd.arg("--ro-bind-try").arg(src).arg(path);
     }    
 
     cmd
