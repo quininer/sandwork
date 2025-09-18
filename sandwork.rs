@@ -56,6 +56,10 @@ fn main() -> anyhow::Result<()> {
         cmd.arg("--ro-bind").arg(&path).arg(&path);
     }
 
+    if let Some(agent) = env::var_os("SSH_AUTH_SOCK") {
+        cmd.arg("--ro-bind").arg(&agent).arg(&agent);
+    }
+
     for dir in &config.overlay {
         let path = home.join(dir);
         let rwsrc = rwsrc.join(dir);
