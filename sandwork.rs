@@ -38,6 +38,7 @@ fn main() -> anyhow::Result<()> {
             "--dev", "/dev",
             "--proc", "/proc",
             "--tmpfs", "/tmp",
+
             "--ro-bind", "/usr", "/usr",
             "--ro-bind", "/etc", "/etc",
             "--ro-bind", "/opt", "/opt",
@@ -45,9 +46,20 @@ fn main() -> anyhow::Result<()> {
             "--symlink", "/usr/bin", "/sbin",
             "--symlink", "/usr/lib", "/lib",
             "--symlink", "/usr/lib", "/lib64",
+
+            // device
+            "--dev-bind", "/dev/dri", "/dev/dri",
+            "--ro-bind", "/sys/dev/char", "/sys/dev/char",
+            "--ro-bind", "/sys/devices/pci0000:00", "/sys/devices/pci0000:00",
+
+            // shadow
             "--ro-bind", "/dev/null", "/etc/shadow",
-            "--ro-bind", "/dev/null", "/etc/shadow-",
+            "--ro-bind", "/dev/null", "/etc/shadow-",            
         ]);
+
+    if let Some(dir) = env::var_os("XDG_RUNTIME_DIR") {
+        cmd.arg("--dir").arg(dir);
+    }
 
     if let (Some(xdg_rt), Some(display)) =
         (env::var_os("XDG_RUNTIME_DIR"), env::var_os("WAYLAND_DISPLAY"))
