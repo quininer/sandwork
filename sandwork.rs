@@ -31,11 +31,18 @@ fn main() -> anyhow::Result<()> {
     };
     
     let mut cmd = Command::new("bwrap");
+
+    cmd.args(&[
+        "--die-with-parent",
+        "--unshare-all",
+    ]);
+
+    if env::var_os("DISABLE_NETWORK").is_none_or(|s| s.is_empty()) {
+        cmd.arg("--share-net");
+    }
+    
     cmd
         .args(&[
-            "--die-with-parent",
-            "--unshare-all",
-            "--share-net",
             "--dev", "/dev",
             "--proc", "/proc",
             "--tmpfs", "/tmp",
