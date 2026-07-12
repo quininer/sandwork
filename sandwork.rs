@@ -7,6 +7,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct Config {
+    runtime: Vec<String>,
     overlay: Vec<PathBuf>,
     shadow: Vec<PathBuf>,
     robind: Vec<PathBuf>,
@@ -50,7 +51,10 @@ fn main() -> anyhow::Result<()> {
             // device
             "--dev-bind", "/dev/dri", "/dev/dri",
             "--ro-bind", "/sys/dev/char", "/sys/dev/char",
-            "--ro-bind", "/sys/devices/pci0000:00", "/sys/devices/pci0000:00",
+            "--ro-bind", "/sys/class/drm", "/sys/class/drm",
+            "--ro-bind", "/sys/devices", "/sys/devices",
+            // "--ro-bind", "/sys/devices/pci0000:00", "/sys/devices/pci0000:00",
+            // "--ro-bind", "/sys/dev/char/226:128/device/drm", "/sys/dev/char/226:128/device/drm",
 
             // shadow
             "--ro-bind", "/dev/null", "/etc/shadow",
@@ -58,7 +62,18 @@ fn main() -> anyhow::Result<()> {
         ]);
 
     if let Some(dir) = env::var_os("XDG_RUNTIME_DIR") {
+        let dir = Path::new(&dir);
+
         cmd.arg("--dir").arg(dir);
+
+        for key in &config.runtime {
+            if let Some(path) = env::var_os(key) {
+                let path = dir.join(path);
+                cmd.arg("--ro-bind")
+                    .arg(&path)
+                    .arg(&path);
+            }
+        }        
     }
 
     if let (Some(xdg_rt), Some(display)) =
