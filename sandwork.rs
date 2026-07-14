@@ -12,6 +12,7 @@ pub struct Config {
     shadow: Vec<PathBuf>,
     robind: Vec<PathBuf>,
     rwbind: Vec<PathBuf>,
+    dir: Vec<PathBuf>,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -32,7 +33,7 @@ fn main() -> anyhow::Result<()> {
     
     let mut cmd = Command::new("bwrap");
 
-    cmd.args(&[
+    cmd.args([
         "--die-with-parent",
         "--unshare-all",
     ]);
@@ -42,7 +43,7 @@ fn main() -> anyhow::Result<()> {
     }
     
     cmd
-        .args(&[
+        .args([
             "--dev", "/dev",
             "--proc", "/proc",
             "--tmpfs", "/tmp",
@@ -83,17 +84,6 @@ fn main() -> anyhow::Result<()> {
         }        
     }
 
-    if let (Some(xdg_rt), Some(display)) =
-        (env::var_os("XDG_RUNTIME_DIR"), env::var_os("WAYLAND_DISPLAY"))
-    {
-        let path = PathBuf::from(xdg_rt).join(display);
-        cmd.arg("--ro-bind").arg(&path).arg(&path);
-    }
-
-    if let Some(agent) = env::var_os("SSH_AUTH_SOCK") {
-        cmd.arg("--ro-bind").arg(&agent).arg(&agent);
-    }
-
     for dir in &config.overlay {
         let path = home.join(dir);
         let rwsrc = rwsrc.join(dir);
@@ -112,13 +102,12 @@ fn main() -> anyhow::Result<()> {
 
     for bind in &config.rwbind {
         let buf;
-        let path;
 
-        if bind.is_relative() {
+        let path = if bind.is_relative() {
             buf = home.join(bind);
-            path = &buf;
+            &buf
         } else {
-            path = bind;
+            bind
         };
 
         cmd.arg("--bind-try").arg(path).arg(path);        
@@ -126,13 +115,12 @@ fn main() -> anyhow::Result<()> {
 
     for bind in &config.robind {
         let buf;
-        let path;
 
-        if bind.is_relative() {
+        let path = if bind.is_relative() {
             buf = home.join(bind);
-            path = &buf;
+            &buf
         } else {
-            path = bind;
+            bind
         };
 
         cmd.arg("--ro-bind-try").arg(path).arg(path);        
@@ -140,13 +128,12 @@ fn main() -> anyhow::Result<()> {
 
     for shadow in &config.shadow {
         let buf;
-        let path;
 
-        if shadow.is_relative() {
+        let path = if shadow.is_relative() {
             buf = home.join(shadow);
-            path = &buf;
+            &buf
         } else {
-            path = shadow;
+            shadow
         };
         let src = if path.is_file() {
             Path::new("/dev/null")            
@@ -155,6 +142,19 @@ fn main() -> anyhow::Result<()> {
         };
 
         cmd.arg("--ro-bind-try").arg(src).arg(path);
+    }
+
+    for dir in &config.dir {
+        let buf;
+
+        let path = if dir.is_relative() {
+            buf = home.join(dir);
+            &buf
+        } else {
+            dir
+        };
+        
+        cmd.arg(path);
     }
 
     let mut args = args.peekable();
